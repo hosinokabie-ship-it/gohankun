@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>今日のごはんくん｜夜ごはんのおかずを当ててくれるおかず占い</title>
+    <meta name="description" content="「今日の夜ごはん、何にしよう」で決まらないときに。いくつかの質問に答えていくと、ごはんくんが今夜のおかずを言い当てます。料理は100品、所要時間と主な材料、レシピ検索へのリンクつき。無料・登録不要で遊べます。" />
+    <meta property="og:title" content="今日のごはんくん｜夜ごはんのおかずを当ててくれるおかず占い" />
+    <meta property="og:description" content="質問に答えていくと今夜のおかずを言い当てる、無料のおかず占い。料理は100品。" />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #fdf6ec;
+        --bg-soft: #fbeed3;
+        --card: #fffdf8;
+        --ink: #3d2c1e;
+        --ink-soft: #7a6350;
+        --accent: #e4572e;
+        --accent-deep: #c7431f;
+        --accent-ink: #ffffff;
+        --gold: #f2a007;
+        --line: #ecd9bd;
+        --bubble: #ffffff;
+        --shadow: 0 10px 30px rgba(120, 72, 20, 0.14);
+        --btn-no: #fffdf8;
+        --btn-mid: #f3e7d2;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #211712;
+          --bg-soft: #2c1e15;
+          --card: #2e2019;
+          --ink: #f5e8d8;
+          --ink-soft: #c8ab90;
+          --accent: #f06a3a;
+          --accent-deep: #e4572e;
+          --accent-ink: #ffffff;
+          --gold: #f5b52e;
+          --line: #4a3423;
+          --bubble: #37281d;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+          --btn-no: #37281d;
+          --btn-mid: #453322;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+        background:
+          radial-gradient(circle at 12% -4%, var(--bg-soft) 0, transparent 46%),
+          radial-gradient(circle at 92% 0%, var(--bg-soft) 0, transparent 40%),
+          var(--bg);
+        color: var(--ink);
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+      /* ---------- Genie stage ---------- */
+      .stage {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        margin-top: 6px;
+      }
+      .genie {
+        flex: 0 0 auto;
+        width: 104px;
+        filter: drop-shadow(0 6px 10px rgba(120, 72, 20, 0.18));
+        animation: floaty 3.2s ease-in-out infinite;
+      }
+      @keyframes floaty {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-7px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .genie { animation: none; }
+      }
+      .bubble {
+        position: relative;
+        flex: 1 1 auto;
+        background: var(--bubble);
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        padding: 14px 16px;
+        box-shadow: var(--shadow);
+        min-height: 76px;
+        display: flex;
+        align-items: center;
+      }
+      .bubble::before {
+        content: "";
+        position: absolute;
+        left: -11px;
+        bottom: 22px;
+        width: 18px; height: 18px;
+        background: var(--bubble);
+        border-left: 2px solid var(--line);
+        border-bottom: 2px solid var(--line);
+        transform: rotate(45deg);
+        border-bottom-left-radius: 4px;
+      }
+      .bubble p {
+        margin: 0;
+        font-size: 1.06rem;
+        font-weight: 700;
+        line-height: 1.55;
+      }
+      .bubble .small {
+        display: block;
+        margin-top: 4px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--ink-soft);
+      }
+      /* ---------- Status bar ---------- */
+      .status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 18px 2px 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--ink-soft);
+      }
+      .status .count b {
+        color: var(--accent);
+        font-size: 1.05rem;
+      }
+      .dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+      .dots i {
+        width: 9px; height: 9px; border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .dots i.on { background: var(--gold); }
+      /* ---------- Card ---------- */
+      .card {
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        padding: 22px 18px;
+      }
+      .q-num {
+        font-family: "M PLUS Rounded 1c", sans-serif;
+        font-weight: 800;
+        color: var(--gold);
+        letter-spacing: 0.08em;
+        font-size: 0.8rem;
+        margin: 0 0 6px;
+      }
+      .q-text {
+        font-family: "M PLUS Rounded 1c", sans-serif;
+        font-size: 1.42rem;
+        font-weight: 800;
+        line-height: 1.45;
+        margin: 0 0 20px;
+      }
+      /* ---------- Buttons ---------- */
+      .answers { display: grid; gap: 10px; }
+      .btn {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 800;
+        border-radius: 16px;
+        min-height: 56px;
+        padding: 12px 16px;
+        font-size: 1.08rem;
+        transition: transform 0.08s ease, filter 0.15s ease;
+        width: 100%;
+      }
+      .btn:active { transform: scale(0.98); }
+      .btn-yes {
+        background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+        color: var(--accent-ink);
+        box-shadow: 0 5px 0 var(--accent-deep), 0 8px 16px rgba(196, 67, 31, 0.25);
+        font-size: 1.2rem;
+      }
+      .btn-no {
+        background: var(--btn-no);
+        color: var(--ink);
+        border: 2px solid var(--line);
+      }
+      .btn-mid {
+        background: var(--btn-mid);
+        color: var(--ink-soft);
+        font-size: 0.98rem;
+        min-height: 48px;
+      }
+      .btn-gold {
+        background: linear-gradient(180deg, var(--gold), #d98d06);
+        color: #fff;
+        box-shadow: 0 5px 0 #b97a05, 0 8px 16px rgba(185, 122, 5, 0.25);
+        font-size: 1.15rem;
+      }
+      .row-btns { display: grid; gap: 10px; margin-top: 12px; }
+      .link-btn {
+        background: none;
+        border: none;
+        color: var(--ink-soft);
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 10px;
+        min-height: 40px;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+      }
+      /* ---------- Start / result ---------- */
+      .lead {
+        font-size: 1rem;
+        line-height: 1.75;
+        margin: 0 0 18px;
+      }
+      .lead b { color: var(--accent); }
+      .dish-name {
+        font-family: "M PLUS Rounded 1c", sans-serif;
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1.3;
+        margin: 4px 0 8px;
+        color: var(--accent-deep);
+      }
+      @media (prefers-color-scheme: dark) {
+        .dish-name { color: var(--gold); }
+      }
+      .dish-desc { margin: 0 0 16px; line-height: 1.7; font-size: 0.98rem; }
+      .meta {
+        display: grid;
+        gap: 10px;
+        margin: 0 0 20px;
+      }
+      .meta div {
+        background: var(--bg-soft);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 0.94rem;
+        line-height: 1.6;
+      }
+      .meta dt {
+        font-weight: 900;
+        font-size: 0.78rem;
+        color: var(--ink-soft);
+        letter-spacing: 0.06em;
+        margin-bottom: 2px;
+      }
+      .meta dd { margin: 0; font-weight: 700; }
+      a.recipe {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 56px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.08rem;
+        text-decoration: none;
+        box-shadow: 0 5px 0 var(--accent-deep), 0 8px 16px rgba(196, 67, 31, 0.25);
+      }
+      .cand-list { display: grid; gap: 10px; }
+      .cand {
+        text-align: left;
+        background: var(--btn-no);
+        border: 2px solid var(--line);
+        border-radius: 14px;
+        padding: 13px 16px;
+        font-family: inherit;
+        font-size: 1.02rem;
+        font-weight: 800;
+        color: var(--ink);
+        cursor: pointer;
+        min-height: 52px;
+        width: 100%;
+      }
+      .cand span {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--ink-soft);
+        margin-top: 2px;
+      }
+      /* ---------- Teach form ---------- */
+      .field { margin-bottom: 14px; }
+      .field label {
+        display: block;
+        font-weight: 900;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+      }
+      .field input {
+        width: 100%;
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ink);
+        background: var(--bubble);
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        padding: 11px 13px;
+        min-height: 48px;
+      }
+      .field input:focus { outline: 3px solid var(--gold); outline-offset: 1px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 16px; }
+      .chip {
+        appearance: none;
+        border: 2px solid var(--line);
+        background: var(--btn-no);
+        color: var(--ink);
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 0.92rem;
+        border-radius: 999px;
+        padding: 8px 14px;
+        min-height: 40px;
+        cursor: pointer;
+      }
+      .chip.on {
+        background: var(--accent);
+        border-color: var(--accent-deep);
+        color: #fff;
+      }
+      .form-err {
+        color: var(--accent-deep);
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin: 0 0 12px;
+      }
+      @media (prefers-color-scheme: dark) {
+        .form-err { color: var(--gold); }
+      }
+      .learned-info {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--ink-soft);
+        margin: 0 0 14px;
+        line-height: 1.6;
+      }
+      .hidden { display: none !important; }
+      .fade-in { animation: fadeIn 0.25s ease; }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .fade-in { animation: none; }
+        .btn { transition: none; }
+      }
+      @media (max-width: 420px) {
+        .genie { width: 84px; }
+        .q-text { font-size: 1.28rem; }
+        .dish-name { font-size: 1.7rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <!-- Genie + speech bubble -->
+      <div class="stage">
+        <svg class="genie" viewBox="0 0 120 128" role="img" aria-label="今日のごはんくん">
+          <!-- steam hair -->
+          <path d="M38 26c-6-8 4-10 1-18M60 22c-7-9 5-12 1-21M82 26c-6-8 4-10 1-18" fill="none" stroke="#f2a007" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+          <!-- bowl body -->
+          <path d="M14 62h92c0 26-18 44-46 44S14 88 14 62z" fill="#e4572e"/>
+          <path d="M14 62h92c0 6-1 11-3 16H17c-2-5-3-10-3-16z" fill="#c7431f" opacity="0.55"/>
+          <rect x="10" y="52" width="100" height="12" rx="6" fill="#f2a007"/>
+          <!-- rice top -->
+          <path d="M22 52c4-12 16-16 24-10 3-8 12-12 19-7 8-4 17 1 21 8 6 1 10 4 12 9z" fill="#fff7ea"/>
+          <!-- face -->
+          <circle cx="45" cy="80" r="4.5" fill="#fff"/>
+          <circle cx="75" cy="80" r="4.5" fill="#fff"/>
+          <path d="M52 92q8 7 16 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="34" cy="89" r="5" fill="#ffb59d" opacity="0.8"/>
+          <circle cx="86" cy="89" r="5" fill="#ffb59d" opacity="0.8"/>
+          <!-- feet -->
+          <rect x="42" y="108" width="36" height="7" rx="3.5" fill="#8a5a2b"/>
+        </svg>
+        <div class="bubble">
+          <p id="genie-text">やあ！ぼくは「今日のごはんくん」！<span class="small">今夜のおかず、ぼくが当ててみせるよ！</span></p>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="status hidden" id="status">
+        <span class="count">候補はあと <b id="cand-count">100</b> 品</span>
+        <span class="dots" id="dots" aria-hidden="true"></span>
+      </div>
+
+      <!-- START -->
+      <section class="card" id="screen-start">
+        <p class="lead">
+          「今日の夜ごはん、何にしよう…」その悩み、質問に答えるだけで解決だよ。
+          ぼくが<b>はい／いいえ</b>で聞いていくから、気分のままに答えてね。
+          だいたい<b>7〜10問</b>で、今夜ぴったりのおかずを言い当てるよ。
+          料理は<b>100品</b>覚えてるんだ。
+        </p>
+        <p class="learned-info hidden" id="learned-info"></p>
+        <button class="btn btn-yes" id="btn-start">占いスタート</button>
+      </section>
+
+      <!-- QUESTION -->
+      <section class="card hidden" id="screen-question">
+        <p class="q-num" id="q-num">QUESTION 1</p>
+        <p class="q-text" id="q-text"></p>
+        <div class="answers">
+          <button class="btn btn-yes" data-answer="yes">はい</button>
+          <button class="btn btn-no" data-answer="no">いいえ</button>
+          <button class="btn btn-mid" data-answer="mid">どちらでも／わからない</button>
+        </div>
+        <div class="toolbar">
+          <button class="link-btn" id="btn-undo">← ひとつ戻る</button>
+          <button class="link-btn" id="btn-restart-q">最初から</button>
+        </div>
+      </section>
+
+      <!-- GUESS -->
+      <section class="card hidden" id="screen-guess">
+        <p class="q-num">ごはんくんの予言</p>
+        <p class="lead" style="margin-bottom:6px;">うんうん…見えたよ！今夜のおかずは…</p>
+        <p class="dish-name" id="guess-name"></p>
+        <p class="dish-desc" id="guess-desc"></p>
+        <div class="answers">
+          <button class="btn btn-gold" id="btn-correct">当たり！それにする</button>
+          <button class="btn btn-no" id="btn-wrong">違う…</button>
+        </div>
+      </section>
+
+      <!-- CANDIDATES -->
+      <section class="card hidden" id="screen-candidates">
+        <p class="q-num">最終候補</p>
+        <p class="lead">うーん、絞りきれなかった…。この中にあるかな？</p>
+        <div class="cand-list" id="cand-list"></div>
+        <div class="row-btns">
+          <button class="btn btn-mid" id="btn-none">どれも違う</button>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="card hidden" id="screen-result">
+        <p class="q-num" id="result-label">今夜のおかずは</p>
+        <p class="dish-name" id="result-name"></p>
+        <p class="dish-desc" id="result-desc"></p>
+        <dl class="meta">
+          <div><dt>だいたいの時間</dt><dd id="result-time"></dd></div>
+          <div><dt>主な材料</dt><dd id="result-ing"></dd></div>
+        </dl>
+        <a class="recipe" id="result-recipe" href="#" target="_blank" rel="noopener">レシピを探す（クックパッド）</a>
+        <div class="row-btns">
+          <button class="btn btn-no" id="btn-again">もう一度占う</button>
+        </div>
+      </section>
+
+      <!-- GIVE UP -->
+      <section class="card hidden" id="screen-giveup">
+        <p class="q-num">ごはんくん、降参</p>
+        <p class="lead">
+          うう…今回は当てきれなかった。ごめんね。
+          本当はどんなおかずがよかったのか、<b>教えてくれればその場で覚える</b>よ。
+          次の占いから、きちんと候補に入れるからね。
+        </p>
+        <div class="answers">
+          <button class="btn btn-gold" id="btn-teach">本当のおかずを教える</button>
+          <button class="btn btn-no" id="btn-retry">教えずにもう一度占う</button>
+        </div>
+      </section>
+
+      <!-- TEACH -->
+      <section class="card hidden" id="screen-teach">
+        <p class="q-num">ごはんくんに教える</p>
+        <p class="lead">へえ、それは知らなかった！名前と特徴を教えてね。当てはまる特徴はタップで選んでね。</p>
+        <div class="field">
+          <label for="teach-name">料理の名前（必須）</label>
+          <input id="teach-name" type="text" maxlength="30" placeholder="例：鶏肉と大根の煮物" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="teach-ing">主な材料</label>
+          <input id="teach-ing" type="text" maxlength="60" placeholder="例：鶏もも肉、大根、生姜" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="teach-time">だいたいの時間</label>
+          <input id="teach-time" type="text" maxlength="20" placeholder="例：約20分" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="teach-desc">どんな料理？（一言）</label>
+          <input id="teach-desc" type="text" maxlength="80" placeholder="例：味しみしみでご飯が進む煮物" autocomplete="off" />
+        </div>
+        <p class="q-num" style="margin-top:18px;">この料理の特徴</p>
+        <div class="chips" id="teach-chips"></div>
+        <p class="form-err hidden" id="teach-error"></p>
+        <div class="answers">
+          <button class="btn btn-yes" id="btn-teach-save">これで覚えさせる</button>
+          <button class="btn btn-mid" id="btn-teach-cancel">やっぱりやめる</button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // ============ 料理データ（100品） ============
+      // flags: m=肉 f=魚 e=卵 t=豆腐 h=こってり s=辛い fr=揚げ物 q=15分前後
+      //        so=汁物・鍋 c=中華 w=洋食 v=野菜たっぷり fd=冷蔵庫の残り物向き r=ご飯が進む
+      var DISHES = [
+        { name: "豚の生姜焼き", desc: "甘辛ダレと生姜の香りで、白いご飯が止まらなくなる王道おかず。", time: "約15分", ing: "豚ロース薄切り、玉ねぎ、生姜", f: { m:1, q:1, r:1, fd:1 } },
+        { name: "鶏の唐揚げ", desc: "にんにく醤油に漬け込んだ、サクッとジューシーな不動の人気者。", time: "約30分（漬け込み込み）", ing: "鶏もも肉、片栗粉、生姜、にんにく", f: { m:1, fr:1, h:1, r:1 } },
+        { name: "ハンバーグ", desc: "肉汁じゅわっ。デミグラスでも和風おろしでも外さない洋食の主役。", time: "約30分", ing: "合いびき肉、玉ねぎ、パン粉、卵", f: { m:1, h:1, w:1, e:1 } },
+        { name: "麻婆豆腐", desc: "ピリッと痺れる辛さでご飯が進む。豆腐だから重すぎないのもいいところ。", time: "約15分", ing: "豆腐、豚ひき肉、長ねぎ、豆板醤", f: { t:1, s:1, c:1, q:1, r:1, m:1 } },
+        { name: "回鍋肉", desc: "キャベツが山ほど食べられる、甜麺醤のコクが決め手の中華炒め。", time: "約20分", ing: "豚バラ肉、キャベツ、ピーマン、甜麺醤", f: { m:1, c:1, v:1, r:1 } },
+        { name: "青椒肉絲", desc: "ピーマンと細切り肉のシャキッと炒め。彩りもごちそう感も満点。", time: "約15分", ing: "豚肉または牛肉、ピーマン、たけのこ", f: { m:1, c:1, v:1, q:1 } },
+        { name: "餃子", desc: "焼きたての羽根つき餃子は、それだけで食卓がお祭りになる。", time: "約40分", ing: "豚ひき肉、キャベツ、ニラ、餃子の皮", f: { m:1, c:1, h:1, v:1 } },
+        { name: "サバの味噌煮", desc: "こっくり味噌で煮込んだ、和食の顔。生姜を効かせると臭み知らず。", time: "約25分", ing: "サバ、味噌、生姜", f: { f:1, r:1 } },
+        { name: "鮭のムニエル", desc: "バターの香りとレモンの酸味。パンにもご飯にも合う軽やかな洋食。", time: "約15分", ing: "生鮭、小麦粉、バター、レモン", f: { f:1, w:1, q:1 } },
+        { name: "ぶりの照り焼き", desc: "つやつやの甘辛ダレが絡んだ、ご飯のお供の優等生。", time: "約15分", ing: "ぶり、醤油、みりん、酒", f: { f:1, r:1, q:1 } },
+        { name: "アジの南蛮漬け", desc: "揚げたてを甘酢にジュッ。さっぱりしつつ野菜もたっぷり摂れる。", time: "約30分", ing: "アジ、玉ねぎ、人参、酢", f: { f:1, fr:1, v:1 } },
+        { name: "肉じゃが", desc: "ほくほくじゃがいもに味しみしみ。ほっとする家庭の味の代表格。", time: "約30分", ing: "牛肉、じゃがいも、玉ねぎ、人参", f: { m:1, v:1, r:1, fd:1 } },
+        { name: "カレーライス", desc: "迷ったら結局これ。具だくさんで煮込めば、明日はもっとおいしい。", time: "約40分", ing: "肉、じゃがいも、玉ねぎ、人参、カレールウ", f: { m:1, h:1, s:1, v:1, fd:1, r:1 } },
+        { name: "クリームシチュー", desc: "寒い夜に体が温まる、ミルクのやさしいコク。パンを浸すのも幸せ。", time: "約35分", ing: "鶏肉、じゃがいも、玉ねぎ、牛乳", f: { m:1, w:1, h:1, so:1, v:1 } },
+        { name: "親子丼", desc: "ふわとろ卵と鶏肉の出汁つゆ。忙しい日の味方であり、ごちそうでもある。", time: "約15分", ing: "鶏もも肉、卵、玉ねぎ", f: { m:1, e:1, q:1, r:1, fd:1 } },
+        { name: "オムライス", desc: "ケチャップライスをふわふわ卵で包む、みんな大好きな洋食の王様。", time: "約25分", ing: "卵、鶏肉、玉ねぎ、ケチャップ、ご飯", f: { e:1, w:1, m:1, r:1 } },
+        { name: "チャーハン", desc: "冷やご飯と卵があれば10分で完成。パラッと仕上がると気分も上がる。", time: "約10分", ing: "卵、長ねぎ、ハムかチャーシュー、ご飯", f: { e:1, c:1, q:1, fd:1 } },
+        { name: "野菜炒め", desc: "冷蔵庫の野菜を一掃できる最速おかず。シャキシャキ食感が命。", time: "約10分", ing: "キャベツ、もやし、人参、ピーマン", f: { v:1, q:1, fd:1 } },
+        { name: "八宝菜", desc: "とろっとあんに海鮮と野菜の旨み。ご飯にかければ中華丼にもなる。", time: "約25分", ing: "エビ、イカ、白菜、人参、うずら卵", f: { f:1, c:1, v:1, e:1 } },
+        { name: "エビチリ", desc: "甘辛チリソースがプリプリのエビに絡む、中華の華やかな一皿。", time: "約20分", ing: "エビ、長ねぎ、ケチャップ、豆板醤", f: { f:1, s:1, c:1 } },
+        { name: "とんかつ", desc: "サクサク衣に分厚い豚ロース。キャベツの千切りと一緒にどうぞ。", time: "約30分", ing: "豚ロース肉、パン粉、キャベツ", f: { m:1, fr:1, h:1 } },
+        { name: "天ぷら", desc: "旬の具材を軽い衣で。塩で食べても天つゆでも、揚げたては正義。", time: "約40分", ing: "エビ、さつまいも、なす、しそ", f: { f:1, fr:1, v:1 } },
+        { name: "焼き塩サバ", desc: "皮パリッ、身はふっくら。大根おろしと醤油で完成する潔い和食。", time: "約15分", ing: "塩サバ、大根", f: { f:1, q:1, fd:1 } },
+        { name: "寄せ鍋", desc: "魚も肉も野菜も豆腐も、出汁に全部おまかせ。〆まで楽しめる冬の王者。", time: "約30分", ing: "白菜、鶏肉、タラ、豆腐、長ねぎ", f: { so:1, v:1, m:1, f:1, t:1 } },
+        { name: "しゃぶしゃぶ", desc: "薄切り肉を湯にくぐらせるだけ。野菜も無限に食べられる軽やか鍋。", time: "約20分", ing: "豚肉または牛肉、水菜、豆腐", f: { m:1, so:1, v:1, t:1 } },
+        { name: "すき焼き", desc: "甘辛い割り下で牛肉と野菜を煮る、ちょっと贅沢な夜の主役。", time: "約30分", ing: "牛肉、白菜、長ねぎ、焼き豆腐", f: { m:1, h:1, so:1, r:1, t:1, v:1 } },
+        { name: "おでん", desc: "出汁しみしみの大根と卵。作り置きもきく、ほっこり汁物おかず。", time: "約60分（煮込み）", ing: "大根、卵、こんにゃく、練り物", f: { so:1, e:1, f:1, fd:1 } },
+        { name: "グラタン", desc: "ホワイトソースとチーズのこんがり焼き目。熱々をふうふうしながら。", time: "約35分", ing: "鶏肉、マカロニ、玉ねぎ、チーズ、牛乳", f: { w:1, h:1, m:1 } },
+        { name: "牛ステーキ", desc: "シンプルに塩こしょう、焼き加減が勝負。特別な夜のごちそう。", time: "約20分", ing: "牛肉、にんにく、バター", f: { m:1, h:1, w:1 } },
+        { name: "鶏の照り焼き", desc: "皮パリッ、中はジューシー。甘辛ダレでご飯もサラダも進む万能選手。", time: "約15分", ing: "鶏もも肉、醤油、みりん", f: { m:1, q:1, r:1, fd:1 } },
+        { name: "チキン南蛮", desc: "甘酢とタルタルの二段攻撃。宮崎生まれのご飯強奪おかず。", time: "約30分", ing: "鶏もも肉、卵、玉ねぎ（タルタル用）", f: { m:1, fr:1, e:1, h:1, r:1 } },
+        { name: "油淋鶏", desc: "カリッと揚げた鶏に、ねぎたっぷりの香味ダレ。食欲が暴走する中華。", time: "約30分", ing: "鶏もも肉、長ねぎ、生姜", f: { m:1, fr:1, c:1 } },
+        { name: "筑前煮", desc: "根菜ごろごろ、味しみしみ。翌日はもっとおいしい作り置き煮物。", time: "約40分", ing: "鶏もも肉、れんこん、ごぼう、人参、こんにゃく", f: { m:1, v:1, fd:1 } },
+        { name: "麻婆茄子", desc: "とろとろの茄子にピリ辛ひき肉あん。茄子が油を吸って最高になるやつ。", time: "約20分", ing: "なす、豚ひき肉、豆板醤", f: { v:1, s:1, c:1, m:1, r:1 } },
+        { name: "ゴーヤチャンプルー", desc: "ほろ苦ゴーヤと豆腐と卵の沖縄炒め。夏バテ気味の夜にもすっと入る。", time: "約15分", ing: "ゴーヤ、豆腐、卵、豚肉", f: { e:1, t:1, m:1, v:1, q:1 } },
+        { name: "冷しゃぶサラダ", desc: "茹でた豚肉と生野菜にごまだれ。さっぱりだけど満足感はしっかり。", time: "約15分", ing: "豚薄切り肉、レタス、トマト、ごまだれ", f: { m:1, v:1, q:1 } },
+        { name: "豆腐ハンバーグ", desc: "豆腐でふんわり軽く、でも食べごたえあり。ポン酢やあんかけで。", time: "約25分", ing: "豆腐、鶏ひき肉、玉ねぎ", f: { t:1, m:1 } },
+        { name: "厚揚げステーキ", desc: "焼くだけで外カリッ中ふわ。大根おろしと生姜で居酒屋気分の一品。", time: "約10分", ing: "厚揚げ、大根、生姜", f: { t:1, q:1, fd:1 } },
+        { name: "アクアパッツァ", desc: "白身魚とあさりとトマトをオリーブオイルで。見た目も華やかなイタリアン。", time: "約25分", ing: "白身魚、あさり、ミニトマト、オリーブオイル", f: { f:1, w:1, v:1 } },
+        { name: "白身魚のホイル焼き", desc: "野菜と一緒に包んで蒸し焼き。バター醤油の香りがふわっと広がる。", time: "約20分", ing: "タラ、玉ねぎ、しめじ、バター", f: { f:1, v:1 } },
+        { name: "豚バラ大根", desc: "大根に豚の旨みがしみしみ。ほっとする煮物の定番。", time: "約30分", ing: "豚バラ肉、大根、生姜", f: { m:1, v:1, fd:1, r:1 } },
+        { name: "鶏手羽元のさっぱり煮", desc: "酢でほろっと柔らかく煮えた手羽元。さっぱりなのに満足感あり。", time: "約30分", ing: "鶏手羽元、酢、卵", f: { m:1, fd:1 } },
+        { name: "牛肉とごぼうのしぐれ煮", desc: "甘辛く煮た常備菜の王様。ご飯にもお弁当にも強い。", time: "約20分", ing: "牛肉、ごぼう、生姜", f: { m:1, fd:1, r:1 } },
+        { name: "鶏そぼろ丼", desc: "甘辛そぼろと炒り卵の二色丼。子どもも大人も好きなやつ。", time: "約15分", ing: "鶏ひき肉、卵", f: { m:1, e:1, r:1, q:1 } },
+        { name: "豚キムチ炒め", desc: "キムチの辛さと豚の旨みでご飯が消える、スピード炒め。", time: "約10分", ing: "豚バラ肉、キムチ、ニラ", f: { m:1, s:1, v:1, q:1, r:1 } },
+        { name: "豚の角煮", desc: "時間をかけてとろとろに煮込んだ、休みの日の主役。", time: "約90分", ing: "豚バラブロック、卵、からし", f: { m:1, h:1 } },
+        { name: "鶏つくね", desc: "甘辛ダレでつやつや。軟骨入りなら食感も楽しい。", time: "約25分", ing: "鶏ひき肉、卵、大葉", f: { m:1, e:1 } },
+        { name: "サイコロステーキ", desc: "一口サイズで焼きやすい、にんにくバターの破壊力。", time: "約15分", ing: "牛肉、にんにく、バター", f: { m:1, h:1, w:1, q:1 } },
+        { name: "チキンのトマト煮込み", desc: "トマトの酸味と鶏の旨み。パンにもご飯にも合う煮込み。", time: "約30分", ing: "鶏もも肉、トマト缶、玉ねぎ", f: { m:1, w:1, v:1, so:1 } },
+        { name: "鶏肉のカシューナッツ炒め", desc: "ナッツの食感が楽しい、彩りよしの中華炒め。", time: "約20分", ing: "鶏もも肉、カシューナッツ、ピーマン", f: { m:1, c:1 } },
+        { name: "豚肉と茄子の味噌炒め", desc: "味噌のコクで茄子がとろける、ご飯泥棒な炒め物。", time: "約15分", ing: "豚肉、なす、味噌", f: { m:1, v:1, fd:1, r:1 } },
+        { name: "ミートボール", desc: "ケチャップソースを絡めた、洋食の安心感がある一皿。", time: "約25分", ing: "合いびき肉、卵、トマトソース", f: { m:1, w:1, h:1, e:1 } },
+        { name: "ロールキャベツ", desc: "スープしみしみのキャベツで包んだ、やさしい煮込み。", time: "約40分", ing: "キャベツ、合いびき肉、玉ねぎ", f: { m:1, v:1, so:1, w:1 } },
+        { name: "手羽先の甘辛揚げ", desc: "名古屋の味。ごま入りの甘辛ダレで手が止まらなくなるやつ。", time: "約25分", ing: "鶏手羽先、ごま、甘辛ダレ", f: { m:1, fr:1, r:1 } },
+        { name: "ポークソテー", desc: "シンプルに焼いてソースで決める、肉の実力勝負。", time: "約15分", ing: "豚ロース厚切り、にんにく", f: { m:1, w:1, q:1 } },
+        { name: "よだれ鶏", desc: "しっとり蒸し鶏にピリ辛の香味ダレ。冷やしてもうまい。", time: "約20分", ing: "鶏むね肉、長ねぎ、花椒", f: { m:1, s:1, c:1 } },
+        { name: "牛丼", desc: "甘辛つゆでサッと煮る、困ったときの最速丼。", time: "約15分", ing: "牛肉、玉ねぎ", f: { m:1, r:1, q:1, fd:1 } },
+        { name: "スペアリブのマーマレード煮", desc: "甘酸っぱいコクで骨離れよく仕上がる煮込み。", time: "約60分", ing: "豚スペアリブ、マーマレード", f: { m:1, h:1, w:1 } },
+        { name: "ハムカツ", desc: "厚切りハムの懐かしい味がサクッと復活。ソースたっぷりで。", time: "約15分", ing: "厚切りハム、パン粉", f: { m:1, fr:1 } },
+        { name: "ピーマンの肉詰め", desc: "ピーマンのほろ苦さと肉汁の好相性。", time: "約25分", ing: "ピーマン、合いびき肉、玉ねぎ", f: { m:1, v:1 } },
+        { name: "鮭のちゃんちゃん焼き", desc: "北海道の漁師めし。味噌バターで野菜が山ほど食べられる。", time: "約20分", ing: "生鮭、キャベツ、味噌、バター", f: { f:1, v:1 } },
+        { name: "さんまの塩焼き", desc: "秋の顔。脂ののった身と大根おろしの潔さ。", time: "約15分", ing: "さんま、大根", f: { f:1, q:1, fd:1 } },
+        { name: "カレイの煮付け", desc: "甘辛つゆでふっくら煮た、和食の基本のき。", time: "約20分", ing: "カレイ、生姜", f: { f:1, fd:1, r:1 } },
+        { name: "エビマヨ", desc: "甘いソースがプリプリのエビに絡む、みんな好きな人気者。", time: "約20分", ing: "エビ、マヨネーズ、練乳", f: { f:1, w:1, h:1 } },
+        { name: "イカと里芋の煮物", desc: "イカの旨みが里芋にしみる、ほっこり煮物。", time: "約25分", ing: "イカ、里芋", f: { f:1, fd:1 } },
+        { name: "かつおのたたき", desc: "薬味たっぷりでさっぱり。切って盛るだけの速さも魅力。", time: "約10分", ing: "かつお、玉ねぎ、にんにく、ポン酢", f: { f:1, q:1 } },
+        { name: "あさりの酒蒸し", desc: "貝の旨みが全部スープに出る、シンプルなごちそう。", time: "約10分", ing: "あさり、にんにく、酒", f: { f:1, q:1 } },
+        { name: "タラのフライ", desc: "ふわふわの白身にサクサク衣。タルタルを添えて完成。", time: "約20分", ing: "タラ、パン粉、タルタルソース", f: { f:1, fr:1 } },
+        { name: "ブリ大根", desc: "冬の定番煮物。大根は主役級の仕事をする。", time: "約30分", ing: "ぶり、大根", f: { f:1, fd:1 } },
+        { name: "ツナとキャベツの炒め物", desc: "缶詰が主役になる、頼れるスピードおかず。", time: "約10分", ing: "ツナ缶、キャベツ", f: { f:1, v:1, q:1, fd:1 } },
+        { name: "ホタテのバター醤油焼き", desc: "香ばしさが立つ、ちょっと贅沢な焼き物。", time: "約10分", ing: "ホタテ、バター、醤油", f: { f:1, w:1, q:1 } },
+        { name: "しらす丼", desc: "ご飯に乗せるだけ5分。海の塩気でご飯が進む。", time: "約5分", ing: "しらす、大葉、卵黄", f: { f:1, r:1, q:1, fd:1 } },
+        { name: "サーモンとアボカドのポキ風", desc: "切って和えるだけ。ご飯に乗せれば丼にもなる。", time: "約15分", ing: "サーモン、アボカド、醤油", f: { f:1, w:1, q:1 } },
+        { name: "エビとブロッコリーのガーリック炒め", desc: "オリーブオイルとにんにくの香りで食欲全開。", time: "約15分", ing: "エビ、ブロッコリー、にんにく", f: { f:1, v:1, w:1, q:1 } },
+        { name: "ニラ玉", desc: "ふわとろ卵とニラの香り。10分でできる頼れる味方。", time: "約10分", ing: "卵、ニラ", f: { e:1, v:1, q:1, fd:1 } },
+        { name: "卵とトマトの炒め物", desc: "トマトの酸味が卵をさっぱりさせる、中華の定番。", time: "約10分", ing: "卵、トマト", f: { e:1, v:1, q:1 } },
+        { name: "だし巻き卵", desc: "じゅわっと出汁があふれる、和食の名脇役にして主役。", time: "約10分", ing: "卵、出汁、大根おろし", f: { e:1, q:1, fd:1 } },
+        { name: "揚げ出し豆腐", desc: "外カリッ、中とろっ。出汁をまとった豆腐のごちそう感。", time: "約20分", ing: "豆腐、片栗粉、出汁", f: { t:1, fr:1 } },
+        { name: "高野豆腐の煮物", desc: "出汁しみしみの乾物煮物。栄養も満点。", time: "約25分", ing: "高野豆腐、人参、しいたけ", f: { t:1, v:1, fd:1 } },
+        { name: "かぼちゃの煮物", desc: "ほくほく甘い、和食のほっとする一品。", time: "約20分", ing: "かぼちゃ", f: { v:1, fd:1 } },
+        { name: "きんぴらごぼう", desc: "シャキシャキと甘辛。作り置きの顔。", time: "約15分", ing: "ごぼう、人参、ごま", f: { v:1, fd:1, q:1 } },
+        { name: "ポテトサラダ", desc: "みんなの脇役が、山盛りにすれば立派な主役になる。", time: "約20分", ing: "じゃがいも、卵、きゅうり、ハム", f: { v:1, e:1 } },
+        { name: "ラタトゥイユ", desc: "夏野菜を煮込んだ南仏の味。冷やしてもおいしい。", time: "約30分", ing: "なす、ズッキーニ、トマト、パプリカ", f: { v:1, w:1, so:1 } },
+        { name: "なすの田楽", desc: "とろける茄子に甘い味噌。ご飯にも酒にも合う。", time: "約15分", ing: "なす、田楽味噌", f: { v:1, q:1 } },
+        { name: "キャベツと豚肉の重ね蒸し", desc: "重ねて蒸すだけ。ポン酢でさっぱり、野菜たっぷり。", time: "約15分", ing: "豚薄切り肉、キャベツ", f: { m:1, v:1, q:1 } },
+        { name: "豚汁", desc: "これ一杯で食卓が完成する、具だくさんの味噌汁。", time: "約25分", ing: "豚肉、大根、人参、ごぼう、豆腐", f: { so:1, v:1, m:1, fd:1, t:1 } },
+        { name: "もつ鍋", desc: "博多の味。ぷりぷりのもつと山盛り野菜で体が温まる。", time: "約30分", ing: "牛もつ、キャベツ、ニラ、にんにく", f: { so:1, m:1, h:1, v:1 } },
+        { name: "キムチ鍋", desc: "辛さと旨みで体が温まる、冬の即戦力。", time: "約25分", ing: "キムチ、豚肉、豆腐、白菜", f: { so:1, m:1, s:1, t:1, v:1 } },
+        { name: "トマト鍋", desc: "洋風鍋の定番。〆のリゾットまで計算済みの一鍋。", time: "約30分", ing: "トマト缶、鶏肉、キャベツ、チーズ", f: { so:1, w:1, v:1, m:1 } },
+        { name: "豆乳鍋", desc: "まろやかでやさしい、体にしみる鍋。", time: "約25分", ing: "豆乳、鶏肉、白菜、豆腐", f: { so:1, t:1, v:1, m:1 } },
+        { name: "水炊き", desc: "鶏の旨みをポン酢でさっぱりと。素材勝負の鍋。", time: "約30分", ing: "鶏肉、白菜、豆腐、ポン酢", f: { so:1, m:1, t:1, v:1 } },
+        { name: "焼きそば", desc: "ソースの香りが食欲を呼ぶ、屋台の味。", time: "約15分", ing: "中華麺、豚肉、キャベツ、もやし", f: { m:1, v:1, q:1, fd:1 } },
+        { name: "焼きうどん", desc: "醤油の香ばしさが立つ一皿。冷蔵庫一掃にも強い。", time: "約15分", ing: "うどん、キャベツ、人参、かつお節", f: { v:1, q:1, fd:1 } },
+        { name: "ナポリタン", desc: "喫茶店の顔。粉チーズたっぷりでどうぞ。", time: "約15分", ing: "スパゲッティ、ウインナー、ピーマン、ケチャップ", f: { w:1, q:1 } },
+        { name: "明太子パスタ", desc: "和えるだけの速さと、間違いない旨さ。", time: "約15分", ing: "スパゲッティ、明太子、バター、大葉", f: { f:1, w:1, q:1 } },
+        { name: "ペペロンチーノ", desc: "シンプルだからこそ腕が光る、オイルパスタの基本。", time: "約15分", ing: "スパゲッティ、にんにく、唐辛子", f: { w:1, q:1, s:1 } },
+        { name: "天津飯", desc: "ふわふわ卵に甘酢あん。町中華の人気者。", time: "約15分", ing: "卵、カニカマ、ご飯", f: { e:1, c:1, r:1, q:1 } },
+        { name: "ロコモコ丼", desc: "ハワイ生まれの満足丼。目玉焼きは必須。", time: "約20分", ing: "ハンバーグ、卵、グレイビーソース", f: { m:1, e:1, w:1, r:1 } },
+        { name: "ガパオライス", desc: "バジルと辛さの香りで、食欲が一気に開くタイの味。", time: "約15分", ing: "鶏ひき肉、バジル、目玉焼き", f: { m:1, s:1, e:1, r:1, q:1 } },
+        { name: "キーマカレー", desc: "煮込み短めで作れる、ひき肉たっぷりのカレー。", time: "約20分", ing: "合いびき肉、玉ねぎ、トマト、カレー粉", f: { m:1, s:1, h:1, v:1, q:1 } }
+      ];
+
+      // ============ 派生フラグ（料理名・説明・材料から自動で付ける） ============
+      // 新しい切り口の質問用。元の特徴フラグには手を入れず、ここで足し算する。
+      DISHES.forEach(function (d) {
+        var name = d.name, desc = d.desc, ing = d.ing;
+        // 丼・麺・ごはんもの（主食ドーン系）
+        if (/丼|チャーハン|オムライス|カレーライス|天津飯|ガパオ|ロコモコ|焼きそば|焼きうどん|ナポリタン|パスタ|ペペロンチーノ|キーマカレー/.test(name)) d.f.donmen = 1;
+        // 煮物・煮込み
+        if (name.indexOf("煮") >= 0 || ["肉じゃが", "おでん", "クリームシチュー", "カレーライス", "ロールキャベツ", "ブリ大根", "豚バラ大根", "キーマカレー", "ラタトゥイユ"].indexOf(name) >= 0) d.f.niru = 1;
+        // 焼き物（焼きそば・焼きうどん・すき焼きは除く）
+        if ((name.indexOf("焼") >= 0 || /ステーキ|ソテー|ムニエル|グラタン/.test(name)) && ["焼きそば", "焼きうどん", "すき焼き"].indexOf(name) < 0) d.f.yaki = 1;
+        // あっさり・さっぱり
+        if (desc.indexOf("さっぱり") >= 0 || name.indexOf("さっぱり") >= 0 || ["冷しゃぶサラダ", "かつおのたたき", "サーモンとアボカドのポキ風", "あさりの酒蒸し", "しゃぶしゃぶ", "水炊き", "アジの南蛮漬け", "しらす丼", "卵とトマトの炒め物", "キャベツと豚肉の重ね蒸し"].indexOf(name) >= 0) d.f.assari = 1;
+        // 甘辛い味
+        if (desc.indexOf("甘辛") >= 0) d.f.amakara = 1;
+        // にんにく・スタミナ系
+        if (ing.indexOf("にんにく") >= 0) d.f.ninniku = 1;
+        // 体が温まる
+        if (d.f.so || desc.indexOf("温まる") >= 0) d.f.warm = 1;
+        // バター・チーズ・クリーム系のまろやかさ
+        if (/チーズ|バター|牛乳/.test(ing) || name === "エビマヨ") d.f.dairy = 1;
+      });
+
+      // ============ 質問データ ============
+      // text が代表文、v は言い回しのバリエーション。出題時にランダムで1つ選ぶ。
+      var QUESTIONS = [
+        { key: "m",  text: "お肉がガッツリ食べたい気分？", v: ["今日はお肉の出番かな？", "お肉なしじゃ物足りない日？", "お肉ドーン！といきたい気分？"] },
+        { key: "f",  text: "お魚の気分…だったりする？", v: ["今日はお魚に呼ばれてる気がする？", "海のものが食べたい気分？", "お魚でほっこりしたい日？"] },
+        { key: "h",  text: "こってり濃い味で攻めたい？", v: ["今日はこってり全開でもいい？", "軽い味じゃ物足りない気分？", "コクのある濃い味、恋しくない？"] },
+        { key: "s",  text: "ピリ辛で、ちょっと汗かきたい？", v: ["辛いのでスカッとしたい？", "ピリッと刺激がほしい気分？", "唐辛子や豆板醤の出番かな？"] },
+        { key: "fr", text: "揚げ物、サクッといっちゃう？", v: ["サクサク衣の誘惑に乗っちゃう？", "今日は揚げ物解禁の日？", "カリッと揚がったやつ、食べたい？"] },
+        { key: "q",  text: "15分くらいでパパッと作りたい？", v: ["今日は時短で済ませたい？", "キッチンに長くいたくない気分？", "手早く作れるやつがいい？"] },
+        { key: "so", text: "汁物とか、鍋っぽいのがいい？", v: ["汁まで飲み干したい気分？", "お鍋を囲みたい夜だったりする？", "スープたっぷりのやつはどう？"] },
+        { key: "c",  text: "中華っぽい気分だったりする？", v: ["今日は中華の香りが恋しい？", "町中華みたいな一皿、どう？", "オイスターや豆板醤の気分？"] },
+        { key: "w",  text: "洋食っぽい気分だったりする？", v: ["今日は洋食屋さんの気分？", "バターやソースの香り、どう？", "ナイフとフォーク気分だったりする？"] },
+        { key: "v",  text: "野菜はたっぷり摂りたい？", v: ["今日は野菜をモリモリいきたい？", "野菜不足、解消しときたい？", "サラダ感覚じゃなく主役級の野菜はどう？"] },
+        { key: "e",  text: "卵、使っちゃう？", v: ["ふわふわ卵の出番かな？", "卵が入ると嬉しいタイプ？", "今日は卵料理に惹かれる？"] },
+        { key: "t",  text: "豆腐や厚揚げはどう？", v: ["お豆腐でほっとしたい気分？", "大豆パワー、借りちゃう？", "豆腐が主役でもいい日？"] },
+        { key: "fd", text: "冷蔵庫の残り物で済ませたい？", v: ["買い物に行かずに済ませたい？", "冷蔵庫の中身で勝負したい日？", "家にあるものでなんとかしたい？"] },
+        { key: "r",  text: "白いご飯がモリモリ進むやつがいい？", v: ["ご飯のおかず、という感じがいい？", "お茶碗が止まらなくなるやつ、どう？", "丼にしてもいいくらい、ご飯と仲良しなやつ？"] },
+        { key: "donmen", text: "丼とか麺とか、主食ドーンな一皿がいい？", v: ["ご飯ものや麺類で一皿完結させたい？", "パスタや焼きそばの気分だったりする？", "おかず＋ご飯より、一皿でドンと出したい？"] },
+        { key: "niru", text: "じっくり煮込んだやつ、恋しくない？", v: ["味しみしみの煮物はどう？", "コトコト煮たやつでほっこりしたい？", "煮込み料理に惹かれる夜？"] },
+        { key: "yaki", text: "焼きたての香ばしいやつがいい？", v: ["ジュージュー焼く音、聞きたい気分？", "焼き目がついたやつ、食べたい？", "グリルやフライパンで焼く系はどう？"] },
+        { key: "assari", text: "あっさり・さっぱり系で軽くいきたい？", v: ["胃にやさしい軽めのやつがいい？", "さっぱりした味でリフレッシュしたい？", "重いのは今日はお休みしたい気分？"] },
+        { key: "amakara", text: "甘辛い味付けに惹かれる？", v: ["醤油とみりんの甘辛コンビ、どう？", "照りのある甘辛ダレ、恋しくない？", "甘くてしょっぱい、あの味がいい？"] },
+        { key: "ninniku", text: "にんにくでスタミナつけちゃう？", v: ["ガツンとにんにくの香り、OKな日？", "明日を気にせずにんにくいっちゃう？", "パンチの効いた香りがほしい？"] },
+        { key: "warm", text: "体がポカポカ温まるやつがいい？", v: ["温かい汁気でほっとしたい夜？", "冷えた体を内側から温めたい？", "ふうふうしながら食べるやつ、どう？"] },
+        { key: "dairy", text: "バターやチーズのまろやかさ、ほしい？", v: ["クリーム系のコクに包まれたい？", "チーズがとろけるやつ、惹かれる？", "バターの香りで幸せになりたい気分？"] }
+      ];
+
+      var GENIE_LINES = [
+        "なるほどなるほど…！",
+        "うんうん、見えてきたよ！",
+        "君の胃袋、だいぶ読めてきたよ。",
+        "もう少しだよ、もう少し…！",
+        "うーん…核心に近づいてる気がする！",
+        "ぼくのごはんセンサーがビンビン反応してる…！",
+        "あと少しで言い当てられそうだよ…！",
+        "おっ、その答えは大事だよ…！",
+        "ふむふむ、だいぶ絞れてきたよ。",
+        "君のお腹の声、ぼくには聞こえるんだ。",
+        "いい感じ！その調子で教えてね。",
+        "うーん、迷うなあ…でも楽しい！"
+      ];
+
+      var MAX_Q = 10;
+
+      // ============ 状態 ============
+      var answers = [];        // {key, ans: 'yes'|'no'|'mid'}
+      var excluded = {};       // 外した料理名
+      var currentQ = null;
+      var weights = [];
+
+      var $ = function (id) { return document.getElementById(id); };
+      var screens = ["screen-start", "screen-question", "screen-guess", "screen-candidates", "screen-result", "screen-giveup", "screen-teach"];
+
+      function show(id) {
+        screens.forEach(function (s) {
+          var el = $(s);
+          el.classList.toggle("hidden", s !== id);
+          if (s === id) {
+            el.classList.remove("fade-in");
+            void el.offsetWidth;
+            el.classList.add("fade-in");
+          }
+        });
+        $("status").classList.toggle("hidden", id !== "screen-question");
+      }
+
+      function setGenie(html) { $("genie-text").innerHTML = html; }
+
+      // 回答履歴から重みを再計算（戻る操作もこれで安全に）
+      function computeWeights() {
+        weights = DISHES.map(function () { return 1; });
+        answers.forEach(function (a) {
+          if (a.ans === "mid") return;
+          DISHES.forEach(function (d, i) {
+            var has = !!d.f[a.key];
+            if (a.ans === "yes") weights[i] *= has ? 2.3 : 0.5;
+            else weights[i] *= has ? 0.45 : 1.2;
+          });
+        });
+      }
+
+      function aliveIndices() {
+        var list = [];
+        DISHES.forEach(function (d, i) { if (!excluded[d.name]) list.push(i); });
+        return list;
+      }
+
+      function sortedAlive() {
+        return aliveIndices().sort(function (a, b) { return weights[b] - weights[a]; });
+      }
+
+      function plausibleCount() {
+        var alive = aliveIndices();
+        var top = 0;
+        alive.forEach(function (i) { if (weights[i] > top) top = weights[i]; });
+        var n = 0;
+        alive.forEach(function (i) { if (weights[i] >= top * 0.18) n++; });
+        return n;
+      }
+
+      // 次の質問：候補を最もバランスよく割れるものを選ぶ
+      function pickQuestion() {
+        var askedKeys = {};
+        answers.forEach(function (a) { askedKeys[a.key] = true; });
+        var alive = aliveIndices();
+        var total = 0;
+        alive.forEach(function (i) { total += weights[i]; });
+        var best = null, bestScore = -1;
+        QUESTIONS.forEach(function (q) {
+          if (askedKeys[q.key]) return;
+          var withW = 0;
+          alive.forEach(function (i) { if (DISHES[i].f[q.key]) withW += weights[i]; });
+          var share = withW / total;
+          if (share < 0.06 || share > 0.94) return; // 割れない質問は飛ばす
+          var balance = Math.min(share, 1 - share);
+          // ランダム性も少し強めて、毎回違う質問の流れになるように
+          var score = balance + Math.random() * 0.08;
+          if (score > bestScore) { bestScore = score; best = q; }
+        });
+        return best;
+      }
+
+      function shouldGuess() {
+        var alive = sortedAlive();
+        if (alive.length <= 1) return true;
+        var total = 0;
+        alive.forEach(function (i) { total += weights[i]; });
+        var topShare = weights[alive[0]] / total;
+        if (answers.length >= 4 && topShare >= 0.42) return true;
+        if (answers.length >= 6 && topShare >= 0.34) return true;
+        if (answers.length >= MAX_Q) return true;
+        return false;
+      }
+
+      function renderDots() {
+        var html = "";
+        for (var i = 0; i < MAX_Q; i++) html += "<i class='" + (i < answers.length ? "on" : "") + "'></i>";
+        $("dots").innerHTML = html;
+      }
+
+      function nextStep() {
+        computeWeights();
+        if (shouldGuess()) { makeGuess(); return; }
+        var q = pickQuestion();
+        if (!q) { makeGuess(); return; }
+        currentQ = q;
+        $("q-num").textContent = "QUESTION " + (answers.length + 1);
+        // 言い回しは毎回ランダムに選ぶ（同じ質問でも違う聞き方になる）
+        var phrasings = [q.text].concat(q.v || []);
+        $("q-text").textContent = phrasings[Math.floor(Math.random() * phrasings.length)];
+        $("cand-count").textContent = plausibleCount();
+        renderDots();
+        var line = GENIE_LINES[Math.floor(Math.random() * GENIE_LINES.length)];
+        setGenie(answers.length === 0 ? "よし、始めるよ！気分のままに答えてね。" : line);
+        show("screen-question");
+      }
+
+      var currentGuess = null;
+      function makeGuess() {
+        var alive = sortedAlive();
+        if (!alive.length) { show("screen-giveup"); return; }
+        currentGuess = alive[0];
+        var d = DISHES[currentGuess];
+        $("guess-name").textContent = d.name;
+        $("guess-desc").textContent = d.desc;
+        setGenie("ぼくのごはんパワーが一点に集まってる…！");
+        show("screen-guess");
+      }
+
+      function showResult(dish, label) {
+        $("result-label").textContent = label;
+        $("result-name").textContent = dish.name;
+        $("result-desc").textContent = dish.desc;
+        $("result-time").textContent = dish.time;
+        $("result-ing").textContent = dish.ing;
+        $("result-recipe").href = "https://cookpad.com/search/" + encodeURIComponent(dish.name);
+        show("screen-result");
+      }
+
+      function showCandidates() {
+        var alive = sortedAlive().slice(0, 5);
+        var list = $("cand-list");
+        list.innerHTML = "";
+        alive.forEach(function (i) {
+          var d = DISHES[i];
+          var btn = document.createElement("button");
+          btn.className = "cand";
+          btn.innerHTML = "";
+          btn.appendChild(document.createTextNode(d.name));
+          var span = document.createElement("span");
+          span.textContent = d.time + " ／ " + d.ing;
+          btn.appendChild(span);
+          btn.addEventListener("click", function () {
+            setGenie("おお、それだったか！いい選択だね！");
+            showResult(d, "これが今夜のおかずだよ");
+          });
+          list.appendChild(btn);
+        });
+        setGenie("うーん、ごはんパワーが分散しちゃってる…最後は君の目で選んでね。");
+        show("screen-candidates");
+      }
+
+      function reset() {
+        answers = [];
+        excluded = {};
+        currentQ = null;
+        computeWeights();
+      }
+
+      // ============ イベント ============
+      $("btn-start").addEventListener("click", function () {
+        reset();
+        nextStep();
+      });
+
+      document.querySelectorAll("[data-answer]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (!currentQ) return;
+          answers.push({ key: currentQ.key, ans: btn.getAttribute("data-answer") });
+          nextStep();
+        });
+      });
+
+      $("btn-undo").addEventListener("click", function () {
+        if (!answers.length) { reset(); setGenie("やあ！ぼくは「今日のごはんくん」！<span class='small'>今夜のおかず、ぼくが当ててみせるよ！</span>"); show("screen-start"); return; }
+        answers.pop();
+        nextStep();
+      });
+
+      $("btn-restart-q").addEventListener("click", function () {
+        reset();
+        setGenie("やあ！ぼくは「今日のごはんくん」！<span class='small'>今夜のおかず、ぼくが当ててみせるよ！</span>");
+        show("screen-start");
+      });
+
+      $("btn-correct").addEventListener("click", function () {
+        var d = DISHES[currentGuess];
+        setGenie("やった！ぼくのごはんパワー、まだまだ現役だね。<span class='small'>今夜は " + d.name + " で決まりだよ。おいしく作ってね。</span>");
+        showResult(d, "今夜のおかずはこれだよ");
+      });
+
+      $("btn-wrong").addEventListener("click", function () {
+        excluded[DISHES[currentGuess].name] = true;
+        computeWeights();
+        var alive = aliveIndices();
+        if (answers.length >= MAX_Q - 1 || alive.length <= 5) {
+          showCandidates();
+        } else {
+          setGenie("そっか、外しちゃったか…。まだ諦めないよ、もう少し聞かせてね。");
+          nextStep();
+        }
+      });
+
+      $("btn-none").addEventListener("click", function () {
+        setGenie("うう…まだまだ修行不足だね。");
+        show("screen-giveup");
+      });
+
+      $("btn-again").addEventListener("click", function () {
+        reset();
+        setGenie("やあ！ぼくは「今日のごはんくん」！<span class='small'>今夜のおかず、ぼくが当ててみせるよ！</span>");
+        show("screen-start");
+      });
+
+      $("btn-retry").addEventListener("click", function () {
+        reset();
+        nextStep();
+      });
+
+      // ============ 学習機能（教えてもらった料理をその場で覚える） ============
+      var SHORT_LABELS = { m: "お肉", f: "お魚", e: "卵", t: "豆腐", h: "こってり", s: "辛い", fr: "揚げ物", q: "15分前後", so: "汁物・鍋", c: "中華", w: "洋食", v: "野菜たっぷり", fd: "残り物向き", r: "ご飯が進む", donmen: "丼・麺・ごはんもの", niru: "煮物・煮込み", yaki: "焼き物", assari: "あっさり", amakara: "甘辛", ninniku: "にんにく", warm: "体が温まる", dairy: "バター・チーズ系" };
+      var learnedNames = [];
+      var teachFlags = {};
+
+      function updateLearnedInfo() {
+        var el = $("learned-info");
+        if (!learnedNames.length) { el.classList.add("hidden"); return; }
+        el.textContent = "君が教えてくれた料理が " + learnedNames.length + " 品、候補に加わってるよ（" + learnedNames.join("、") + "）。";
+        el.classList.remove("hidden");
+      }
+
+      function openTeach() {
+        teachFlags = {};
+        ["teach-name", "teach-ing", "teach-time", "teach-desc"].forEach(function (id) { $(id).value = ""; });
+        $("teach-error").classList.add("hidden");
+        var box = $("teach-chips");
+        box.innerHTML = "";
+        QUESTIONS.forEach(function (q) {
+          var chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "chip";
+          chip.textContent = SHORT_LABELS[q.key] || q.key;
+          chip.setAttribute("aria-pressed", "false");
+          chip.addEventListener("click", function () {
+            if (teachFlags[q.key]) {
+              delete teachFlags[q.key];
+              chip.classList.remove("on");
+              chip.setAttribute("aria-pressed", "false");
+            } else {
+              teachFlags[q.key] = 1;
+              chip.classList.add("on");
+              chip.setAttribute("aria-pressed", "true");
+            }
+          });
+          box.appendChild(chip);
+        });
+        setGenie("うんうん、しっかり聞くよ。君の味を教えてね。");
+        show("screen-teach");
+      }
+
+      function teachError(msg) {
+        var el = $("teach-error");
+        el.textContent = msg;
+        el.classList.remove("hidden");
+      }
+
+      $("btn-teach").addEventListener("click", openTeach);
+
+      $("btn-teach-cancel").addEventListener("click", function () {
+        setGenie("やあ！ぼくは「今日のごはんくん」！<span class='small'>今夜のおかず、ぼくが当ててみせるよ！</span>");
+        show("screen-start");
+      });
+
+      $("btn-teach-save").addEventListener("click", function () {
+        var name = $("teach-name").value.trim();
+        if (!name) { teachError("料理の名前を入れてね。"); return; }
+        var exists = DISHES.some(function (d) { return d.name === name; });
+        if (exists) { teachError("「" + name + "」は、もう知ってるよ。別の名前で教えてね。"); return; }
+        var flags = {};
+        Object.keys(teachFlags).forEach(function (k) { flags[k] = 1; });
+        var dish = {
+          name: name,
+          desc: $("teach-desc").value.trim() || (name + "は、君が直接教えてくれた一品だよ。"),
+          time: $("teach-time").value.trim() || "お好みで",
+          ing: $("teach-ing").value.trim() || "材料はお好みで",
+          f: flags
+        };
+        DISHES.push(dish);
+        learnedNames.push(name);
+        updateLearnedInfo();
+        computeWeights();
+        setGenie("覚えたよ！「" + name + "」は、もうぼくの候補だよ。<span class='small'>次に同じ気分のときは、ちゃんと言い当てるからね。</span>");
+        showResult(dish, "教えてもらったおかずだよ");
+      });
+
+      computeWeights();
+    </script>
+  </body>
+</html>
